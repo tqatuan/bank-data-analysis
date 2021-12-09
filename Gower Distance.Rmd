@@ -1,0 +1,117 @@
+---
+title: "Gower Clustering"
+author: "Tuan Tran"
+date: "12/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(reshape2)
+library(purrr)
+library(robustHD)
+library(cluster)
+library(tidyverse)
+
+#Transform data type to prepare for Gower distance calculating
+bank <- read.csv("bank.csv")
+bank[2:10] <- lapply(bank[2:10], factor)
+bank[,15] <- as.factor(bank[,15])
+bank[, c(21)] <- as.factor(bank[,c(21)])
+
+bank_df<- bank %>% 
+  filter( y == "yes")
+
+```
+
+
+```{r}
+
+#set.seed(1)
+#Choosing 25% of dataset to run analysis since this methods requires high computational power
+#sample <- sample(c(TRUE, FALSE), nrow(bank), replace = T, prob = c(0.25,0.75))
+#train <- bank[sample, ]
+
+#Final dataset that will be used to run Gower distance
+#bank_df <- train[, -c(9,10,16,17,18,19,20)]
+bank_df <- bank_df[, -c(9,10,16,17,18,19,20)]
+#Duration at column 9th is the variables with a left skewed distribution so we make sure to transform it to a logarit varibale to run Gower distance
+gower_df <- daisy(bank_df,
+                    metric = "gower",type = list(logratio = 9))
+#View result
+summary(gower_df)
+
+```
+```{r, warning=FALSE}
+#Calculate the medoids of clusters and Silhouette Width to select the optimal number of clusters
+silhouette <- c()
+silhouette = c(silhouette, NA)
+for(i in 2:10){
+  pam_clusters = pam(as.matrix(bank_df),
+                 diss = TRUE,
+                 k = i)
+  silhouette = c(silhouette ,pam_clusters$silinfo$avg.width)
+}
+```
+
+
+```{r}
+#Plotting Silhouette Width
+plot(1:10, silhouette,
+     xlab = "Clusters",
+     ylab = "Silhouette Width")
+lines(1:10, silhouette)
+```
+
+
+```{r}
+
+#construct a PAM model with 2 clusters, and try to interpret the behavior of these clusters with the help of the medoids
+pam_german = pam(gower_df, diss = TRUE, k = 2)
+bank_df[pam_german$medoids, ]
+
+#Summarize the result of Cluster
+pam_summary <- bank_df %>%
+  mutate(cluster = pam_german$clustering) %>%
+  group_by(cluster) %>%
+  do(cluster_summary = summary(.))
+pam_summary$cluster_summary[[1]]
+#Summarize the result of Cluster
+pam_summary <- bank_df %>%
+  mutate(cluster = pam_german$clustering) %>%
+  group_by(cluster) %>%
+  do(cluster_summary = summary(.))
+pam_summary$cluster_summary[[2]]
+
+#install.packages("Rtsne")
+#Visualize the 2 cluster 
+library(Rtsne)
+library(ggplot2)
+tsne_object <- Rtsne(gower_df, is_distance = TRUE)
+tsne_df <- tsne_object$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_german$clustering))
+ggplot(aes(x = X, y = Y), data = tsne_df) +
+  geom_point(aes(color = cluster))
+```
+
+```{r}
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
