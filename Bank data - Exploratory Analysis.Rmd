@@ -1,0 +1,159 @@
+---
+title: "DSO 530 - Final Project"
+author: "Tuan Tran"
+date: "12/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r, message = FALSE}
+library(tidyverse)
+#installed.packages("scales")
+library(scales)
+library(reshape2)
+bank <- read.csv("bank.csv")
+
+```
+
+
+Exploratory research
+
+@. Outcome variable: Y
+```{r, warning=FALSE}
+
+par(mfrow=c(2,2))
+
+
+bank %>% 
+  group_by(y) %>% 
+  summarize( y=unique(y), count=n()) %>% 
+  ggplot(aes( x=y, y=count))+
+  geom_col(stat="count", width = 0.5, fill="grey35") + labs ( x = "", y="", title = "Campaign outcome" )+
+  coord_flip()+ hrbrthemes::theme_ipsum_ps()+ 
+  geom_text(aes(label = count), hjust=1, color = "white")
+
+ggplot(bank, aes(x=y, y=age, fill = y))+ 
+geom_boxplot(varwidth=F)  +
+labs(x="",
+    y="Score", 
+    title="Distribution of Age by outcome of campaign")+
+  stat_summary(fun = median, geom = "errorbar",
+                 width = .75, linetype = "dashed")
+
+
+bank %>% 
+ggplot(aes(x=age)) + 
+geom_histogram(fill ="dodgerblue4", color = "white" )+
+labs(x="Age",
+         y="Count", 
+       title="Distribution of customers' age")+ 
+theme_bw()
+
+
+bank %>% 
+ggplot(aes(x=duration)) + 
+geom_histogram(fill ="coral3", color = "white" )+
+labs(x="Call Duration",
+         y="Count", 
+       title="Distribution of call duration")+ 
+theme_bw()
+
+summary(bank$duration)
+
+bank %>% 
+ggplot(aes(x=as.factor(pdays))) + 
+geom_bar(fill ="lightblue", color = "white" )+
+labs(x="Age",
+         y="Count", 
+       title="Distribution of Age of converted customers")+ 
+theme_bw()
+
+```
+
+```{r, warning= FALSE}
+
+bank %>% 
+  group_by(job,y) %>% 
+  summarize( job=unique(job), count=n()) %>% 
+ggplot( aes(x=reorder(job,count), y=count, fill = y)) +
+  geom_bar( stat="identity", position = "dodge", alpha=.6, width=.8)+
+  coord_flip() +theme_bw() +
+  labs( x = "Job", y="", title = "Distribution of outcome by job type")
+
+bank %>% 
+  group_by(marital,y) %>% 
+  summarize( marital=unique(marital), count=n()) %>% 
+ggplot( aes(x=reorder(marital,count), y=count, fill = y)) +
+  geom_bar( stat="identity", position = "dodge", alpha=.6, width=.8)+
+  coord_flip() +theme_bw() +
+  labs( x = "Marital Status", y="", title = "Distribution of outcome by Marital Status")
+
+bank %>% 
+  group_by(education,y) %>% 
+  summarize( education=unique(education), count=n()) %>% 
+ggplot( aes(x=reorder(education,count), y=count, fill = y)) +
+  geom_bar( stat="identity", position = "dodge", alpha=.6, width=.8)+
+  coord_flip() +theme_bw() +
+  labs( x = "Education Level", y="", title = "Distribution of outcome by education level")
+
+bank %>% 
+  group_by(y, housing) %>% 
+  summarize( y=unique(y), count=n()) %>% 
+ggplot( aes(x=reorder(y,count), y=count, fill = housing)) +
+  geom_bar( stat="identity", position = "dodge", alpha=.6, width=.8)+
+  coord_flip() +theme_bw() +
+  labs( x = "y", y="", title = "Distribution of outcome by housing status")
+
+
+```
+
+
+```{r}
+
+bank$day_of_week = factor(bank$day_of_week,levels = c("mon", "tue", "wed", "thu", "fri"))
+bank$month = factor(bank$month,levels = c("mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
+
+bank %>%
+  filter(y=="yes") %>% 
+group_by(month,day_of_week) %>%
+summarize( month = unique(month), day=unique(day_of_week), count=n()) %>% 
+ggplot(aes(month, day_of_week))+
+geom_tile(aes(fill = count)) +
+theme_bw() +
+scale_fill_gradient(low="khaki2", high="tomato")+
+ggtitle("Distribution of number of converted customers by day and month")+
+xlab("Month ") +
+ylab("Day of Week")
+
+```
+
+```{r}
+ggplot(bank, aes(y))+
+geom_bar(stat="count", width = 0.5)+ 
+ labs(x="Default",
+         y="Count", 
+       title="Distribution of campaign outcome by default")+ 
+facet_wrap(~default)+ 
+theme_bw()
+
+ggplot(bank, aes(y))+
+geom_bar(stat="count", width = 0.5)+
+ labs(x="loan",
+         y="Count", 
+       title="Distribution of campaign outcome by loan")+ 
+facet_wrap(~loan)+
+theme_bw()
+
+```
+
+
+
+
+
+
+
